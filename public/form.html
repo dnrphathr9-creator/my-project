@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>แจ้งซ่อม</title>
+  <script src="setup.js"></script>
+  <script src="api.js"></script>
+  <script>requireLogin()</script>
+</head>
+<body class="min-h-screen bg-base-200">
+
+  <script src="navbar.js"></script>
+
+  <main class="mx-auto max-w-5xl p-4">
+    <!-- ฟอร์มเดียวใช้ทั้งแจ้งซ่อมใหม่และแก้ไข -->
+    <form class="card mx-auto max-w-lg bg-base-100 shadow" onsubmit="save(); return false">
+      <div class="card-body gap-3">
+        <h2 id="heading" class="card-title text-2xl">แจ้งซ่อมใหม่</h2>
+
+        <label class="font-medium">หัวข้อ *</label>
+        <input id="title" class="input w-full" placeholder="เช่น คอมพิวเตอร์เปิดไม่ติด">
+
+        <label class="font-medium">ประเภท *</label>
+        <select id="category" class="select w-full">
+          <option value="">-- เลือกประเภท --</option>
+          <option>คอมพิวเตอร์</option>
+          <option>เครือข่าย</option>
+          <option>ไฟฟ้า</option>
+        </select>
+
+        <!-- ช่องสถานะ แสดงเฉพาะตอนแก้ไข -->
+        <div id="statusBox" class="hidden flex flex-col gap-3">
+          <label class="font-medium">สถานะ</label>
+          <select id="status" class="select w-full">
+            <option>รอดำเนินการ</option>
+            <option>กำลังซ่อม</option>
+            <option>ซ่อมเสร็จ</option>
+          </select>
+        </div>
+
+        <div id="error" class="alert alert-error hidden"></div>
+
+        <div class="flex gap-2">
+          <button class="btn btn-primary">บันทึก</button>
+          <a href="index.html" class="btn">ยกเลิก</a>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    // อ่านเลข id จากที่อยู่ เช่น form.html?id=3 (ไม่มี id = แจ้งซ่อมใหม่, มี id = แก้ไข)
+    const id = new URLSearchParams(location.search).get('id')
+
+    function showError(text) {
+      const error = document.getElementById('error')
+      error.textContent = text
+      error.classList.remove('hidden')
+    }
+
+    // หน้าแก้ไข: ดึงข้อมูลเดิมมาใส่ในฟอร์ม
+    async function loadItem() {
+      if (!id) return
+      document.getElementById('heading').textContent = 'แก้ไขรายการแจ้งซ่อม'
+      document.getElementById('statusBox').classList.remove('hidden')
+      try {
+        const item = await callApi('GET', '/requests/' + id)
+        document.getElementById('title').value = item.title
+        document.getElementById('category').value = item.category
+        document.getElementById('status').value = item.status
+      } catch (err) {
+        showError(err.message)
+      }
+    }
+
+    // บันทึก: ไม่มี id = เพิ่มใหม่ (POST), มี id = แก้ไข (PUT)
+    async function save() {
+      const title = document.getElementById('title').value.trim()
+      const category = document.getElementById('category').value
+      const status = document.getElementById('status').value
+
+      if (title.length < 3) return showError('หัวข้อต้องมีอย่างน้อย 3 ตัวอักษร')
+      if (!category) return showError('กรุณาเลือกประเภท')
+
+      try {
+        let res
+        if (id) {
+          res = await callApi('PUT', '/requests/' + id, { title, category, status })
+        } else {
+          res = await callApi('POST', '/requests', { title, category, reporter: getUser().full_name })
+        }
+        alert(res.message)
+        location.href = 'index.html'
+      } catch (err) {
+        showError(err.message)
+      }
+    }
+
+    loadItem()
+  </script>
+
+</body>
+</html>

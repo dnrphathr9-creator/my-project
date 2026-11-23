@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบแจ้งซ่อม</title>
+  <script src="setup.js"></script>
+  <script src="api.js"></script>
+  <script>requireLogin()</script>
+</head>
+<body class="min-h-screen bg-base-200">
+
+  <script src="navbar.js"></script>
+
+  <main class="mx-auto max-w-5xl p-4">
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+
+        <!-- หัวข้อ + ปุ่มไปหน้าแจ้งซ่อม -->
+        <div class="flex items-center justify-between">
+          <h2 class="card-title text-2xl">รายการแจ้งซ่อม</h2>
+          <a href="form.html" class="btn btn-primary">+ แจ้งซ่อม</a>
+        </div>
+
+        <!-- ข้อความแจ้งผล -->
+        <div id="msg" class="alert hidden"></div>
+
+        <!-- ช่องค้นหา -->
+        <div class="grid gap-2 md:grid-cols-4">
+          <input id="search" class="input w-full" placeholder="ค้นหาหัวข้อ">
+          <select id="status" class="select w-full">
+            <option value="">ทุกสถานะ</option>
+            <option>รอดำเนินการ</option>
+            <option>กำลังซ่อม</option>
+            <option>ซ่อมเสร็จ</option>
+          </select>
+          <select id="filterCategory" class="select w-full">
+            <option value="">ทุกประเภท</option>
+            <option>คอมพิวเตอร์</option>
+            <option>เครือข่าย</option>
+            <option>ไฟฟ้า</option>
+          </select>
+          <button class="btn" onclick="load()">ค้นหา</button>
+        </div>
+
+        <!-- ตารางข้อมูล -->
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>หัวข้อ</th>
+                <th>ประเภท</th>
+                <th>ผู้แจ้ง</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // สีป้ายตามสถานะ
+    const color = { 'รอดำเนินการ': 'badge-warning', 'กำลังซ่อม': 'badge-info', 'ซ่อมเสร็จ': 'badge-success' }
+
+    // แสดงข้อความ (type = 'alert-success' หรือ 'alert-error')
+    function showMsg(text, type) {
+      const msg = document.getElementById('msg')
+      msg.textContent = text
+      msg.className = 'alert ' + type
+    }
+
+    // ดึงรายการจากฐานข้อมูลมาแสดงในตาราง
+    async function load() {
+      const query = new URLSearchParams({
+        search: document.getElementById('search').value,
+        status: document.getElementById('status').value,
+        category: document.getElementById('filterCategory').value,
+      })
+      try {
+        const items = await callApi('GET', '/requests?' + query)
+        let html = ''
+        for (const item of items) {
+          html += `
+            <tr>
+              <td>${item.title}</td>
+              <td>${item.category}</td>
+              <td>${item.reporter}</td>
+              <td><span class="badge ${color[item.status]}">${item.status}</span></td>
+              <td>
+                <a href="form.html?id=${item.id}" class="btn btn-sm">แก้ไข</a>
+                <button class="btn btn-sm btn-error" onclick="removeItem(${item.id})">ลบ</button>
+              </td>
+            </tr>`
+        }
+        if (items.length === 0) html = '<tr><td colspan="5" class="text-center">ไม่พบข้อมูล</td></tr>'
+        document.getElementById('rows').innerHTML = html
+      } catch (err) {
+        showMsg(err.message, 'alert-error')
+      }
+    }
+
+    // ลบรายการ
+    async function removeItem(id) {
+      if (!confirm('ต้องการลบรายการนี้ใช่ไหม')) return
+      try {
+        const res = await callApi('DELETE', '/requests/' + id)
+        showMsg(res.message, 'alert-success')
+        load()
+      } catch (err) {
+        showMsg(err.message, 'alert-error')
+      }
+    }
+
+    load()
+  </script>
+
+</body>
+</html>

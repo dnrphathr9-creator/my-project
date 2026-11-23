@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เข้าสู่ระบบ</title>
+  <script src="setup.js"></script>
+  <script src="api.js"></script>
+</head>
+<body class="min-h-screen bg-base-200 pt-16">
+
+  <!-- กล่องเข้าสู่ระบบ -->
+  <form class="card mx-auto max-w-sm bg-base-100 shadow" onsubmit="login(); return false">
+    <div class="card-body gap-3">
+      <h2 class="card-title justify-center text-2xl">เข้าสู่ระบบ</h2>
+      <input id="username" class="input w-full" placeholder="ชื่อผู้ใช้">
+      <input id="password" class="input w-full" type="password" placeholder="รหัสผ่าน">
+      <div id="error" class="alert alert-error hidden"></div>
+      <button class="btn btn-primary w-full">เข้าสู่ระบบ</button>
+    </div>
+  </form>
+
+  <script>
+    async function login() {
+      const username = document.getElementById('username').value
+      const password = document.getElementById('password').value
+      const error = document.getElementById('error')
+
+      if (!username || !password) {
+        error.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'
+        error.classList.remove('hidden')
+        return
+      }
+      try {
+        const user = await callApi('POST', '/login', { username, password })
+        localStorage.setItem('user', JSON.stringify(user))
+        location.href = 'index.html'
+      } catch (err) {
+        error.textContent = err.message
+        error.classList.remove('hidden')
+      }
+    }
+  </script>
+
+</body>
+</html>
