@@ -1,4 +1,3 @@
-// ไฟล์ตั้งค่ากลาง: ทุกหน้าเรียกใช้ด้วย <script src="setup.js"></script>
 document.documentElement.setAttribute('data-theme', 'light')
 document.write(`
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

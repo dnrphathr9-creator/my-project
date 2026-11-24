@@ -1,4 +1,3 @@
-// แถบด้านบน: ใส่ <script src="navbar.js"></script> ในหน้าที่ต้องการแถบนี้
 document.write(`
   <div class="navbar bg-primary text-primary-content px-4">
     <div class="flex-1 text-lg font-bold">ระบบแจ้งซ่อม</div>
